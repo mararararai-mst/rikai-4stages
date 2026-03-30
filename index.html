@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>理解の4段階</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e8eaf0;
+      --text-muted: #7b7f96;
+      --accent: #7c6af7;
+      --s1: #f87171;
+      --s2: #fb923c;
+      --s3: #34d399;
+      --s4: #60a5fa;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    /* ─── STAGE CARDS ─── */
+    .stages {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    .card.active {
+      border-color: var(--color);
+      box-shadow: 0 0 0 1px var(--color), 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--color);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .card-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--color);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .card-icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .card-en {
+      font-size: 0.72rem;
+      color: var(--color);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .card-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ─── PROGRESS VISUALIZER ─── */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .tracker-wrap {
+      width: 100%;
+      max-width: 700px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 40px;
+    }
+
+    .tracker-label {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .tracker-label span {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 400;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .input-row input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-row input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-add:hover { opacity: 0.85; }
+
+    /* ─── ITEMS LIST ─── */
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .item:hover { border-color: var(--text-muted); }
+
+    .item-name {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+
+    .stage-selector {
+      display: flex;
+      gap: 6px;
+    }
+
+    .stage-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: var(--border);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: transparent;
+    }
+
+    .stage-dot:hover { transform: scale(1.15); }
+
+    .stage-dot.s1 { background: var(--s1); color: #fff; }
+    .stage-dot.s2 { background: var(--s2); color: #fff; }
+    .stage-dot.s3 { background: var(--s3); color: #000; }
+    .stage-dot.s4 { background: var(--s4); color: #fff; }
+
+    .item-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .item-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .item-delete:hover { color: var(--s1); background: rgba(248,113,113,0.1); }
+
+    /* ─── FUNNEL ─── */
+    .funnel-wrap {
+      width: 100%;
+      max-width: 700px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .funnel-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .funnel-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .funnel-tag {
+      width: 90px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-align: right;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .funnel-bar-track {
+      flex: 1;
+      height: 28px;
+      background: var(--bg);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .funnel-bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
+
+    .funnel-count {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap;
+    }
+
+    .funnel-num {
+      width: 28px;
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* ─── TOOLTIP for dots ─── */
+    .stage-dot[data-tip] {
+      position: relative;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 500px) {
+      .tracker-wrap, .funnel-wrap { padding: 20px 16px; }
+      .stages { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>理解の4段階</h1>
+<p class="subtitle">学んでいることが、今どのステージにあるかを可視化する</p>
+
+<!-- ─── STAGE CARDS ─── -->
+<div class="stages" id="stageCards"></div>
+
+<!-- ─── TRACKER ─── -->
+<div class="tracker-wrap">
+  <p class="section-title">トラッカー</p>
+  <p class="tracker-label">学習中のトピックを追加し、ステージを記録しよう
+    <span>ドットをクリックして現在のステージを更新できます</span>
+  </p>
+  <div class="input-row">
+    <input type="text" id="topicInput" placeholder="例: 微積分、React Hooks、議論の構造 …" maxlength="60">
+    <button class="btn-add" onclick="addItem()">追加</button>
+  </div>
+  <div class="items-list" id="itemsList"></div>
+</div>
+
+<!-- ─── FUNNEL ─── -->
+<div class="funnel-wrap">
+  <p class="section-title">分布ビュー</p>
+  <div class="funnel-bars" id="funnelBars"></div>
+</div>
+
+<script>
+const STAGES = [
+  {
+    num: 1,
+    key: 's1',
+    color: 'var(--s1)',
+    hex: '#f87171',
+    icon: '🌑',
+    title: '知らない',
+    en: 'Unconscious Incompetence',
+    desc: '自分が何を知らないか、そもそも気づいていない状態。問題があることすら見えていない。',
+  },
+  {
+    num: 2,
+    key: 's2',
+    color: 'var(--s2)',
+    hex: '#fb923c',
+    icon: '🌓',
+    title: 'わかる',
+    en: 'Conscious Incompetence',
+    desc: '知識としては理解している。しかし実際にやろうとするとまだできない、またはぎこちない。',
+  },
+  {
+    num: 3,
+    key: 's3',
+    color: 'var(--s3)',
+    hex: '#34d399',
+    icon: '🌕',
+    title: 'できる',
+    en: 'Conscious Competence',
+    desc: '意識して考えればできる。練習すれば正確にこなせるが、まだ頭のリソースを使う。',
+  },
+  {
+    num: 4,
+    key: 's4',
+    color: 'var(--s4)',
+    hex: '#60a5fa',
+    icon: '⚡',
+    title: 'している',
+    en: 'Unconscious Competence',
+    desc: '考えなくても自然にできる。スキルが完全に内在化され、体や思考の一部になった状態。',
+  },
+];
+
+// ─── Render stage cards ───
+const cardsEl = document.getElementById('stageCards');
+STAGES.forEach(s => {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.style.setProperty('--color', s.color);
+  el.dataset.stage = s.key;
+  el.innerHTML = `
+    <div class="card-num">Stage ${s.num}</div>
+    <span class="card-icon">${s.icon}</span>
+    <div class="card-title">${s.title}</div>
+    <div class="card-en">${s.en}</div>
+    <div class="card-desc">${s.desc}</div>
+  `;
+  cardsEl.appendChild(el);
+});
+
+// ─── State ───
+let items = JSON.parse(localStorage.getItem('rikai_items') || '[]');
+
+function save() {
+  localStorage.setItem('rikai_items', JSON.stringify(items));
+}
+
+function addItem() {
+  const input = document.getElementById('topicInput');
+  const name = input.value.trim();
+  if (!name) return;
+  items.push({ id: Date.now(), name, stage: 1 });
+  input.value = '';
+  save();
+  render();
+}
+
+document.getElementById('topicInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addItem();
+});
+
+function setStage(id, stage) {
+  const item = items.find(i => i.id === id);
+  if (item) {
+    item.stage = stage;
+    save();
+    render();
+  }
+}
+
+function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  save();
+  render();
+}
+
+function render() {
+  const listEl = document.getElementById('itemsList');
+  if (items.length === 0) {
+    listEl.innerHTML = '<div class="empty">まだトピックがありません。上のフォームから追加してください。</div>';
+  } else {
+    listEl.innerHTML = items.map(item => {
+      const s = STAGES[item.stage - 1];
+      const dots = STAGES.map(st => `
+        <div class="stage-dot ${item.stage === st.num ? st.key : ''}"
+             onclick="setStage(${item.id}, ${st.num})"
+             title="Stage ${st.num}: ${st.title}">
+          ${item.stage === st.num ? st.num : ''}
+        </div>
+      `).join('');
+      return `
+        <div class="item">
+          <span class="item-name">${escHtml(item.name)}</span>
+          <div class="stage-selector">${dots}</div>
+          <span class="item-badge"
+            style="background:${s.hex}22;color:${s.hex}">
+            ${s.icon} ${s.title}
+          </span>
+          <button class="item-delete" onclick="deleteItem(${item.id})" title="削除">✕</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderFunnel();
+  highlightCards();
+}
+
+function renderFunnel() {
+  const counts = [0, 0, 0, 0];
+  items.forEach(i => counts[i.stage - 1]++);
+  const total = items.length || 1;
+
+  const el = document.getElementById('funnelBars');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty">トピックを追加すると分布が表示されます。</div>';
+    return;
+  }
+
+  el.innerHTML = STAGES.map((s, idx) => {
+    const pct = Math.max((counts[idx] / total) * 100, counts[idx] > 0 ? 6 : 0);
+    return `
+      <div class="funnel-row">
+        <div class="funnel-tag">Stage ${s.num} ${s.icon}</div>
+        <div class="funnel-bar-track">
+          <div class="funnel-bar-fill" style="width:${pct}%;background:${s.hex}">
+            ${counts[idx] > 0 ? `<span class="funnel-count">${counts[idx]}</span>` : ''}
+          </div>
+        </div>
+        <div class="funnel-num">${counts[idx]}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function highlightCards() {
+  const counts = [0, 0, 0, 0];
+  items.forEach(i => counts[i.stage - 1]++);
+  document.querySelectorAll('.card').forEach((card, idx) => {
+    card.classList.toggle('active', counts[idx] > 0);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+render();
+</script>
+</body>
+</html>
